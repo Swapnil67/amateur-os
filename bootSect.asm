@@ -1,51 +1,51 @@
-	;;  Basic bootsector that will jump continuously
+;; *
+;; * Simple Boot loader that uses INT13 AH=2 to read from disk into memory
+;; *
 
+org 0x7c00		; * 'origin' of Boot Code; helps make sure addresses don't change
 
-	org 0x7c00		; * 'origin' of Boot Code; helps make sure addresses don't change
+mov bx, 0x1000    ; * load the sector to memory addr 0x1000
+mov es, bx 
+mov bx, 0x0      ; * ES:BX = 0x1000:0x0000
 
-	;; * Set Video Mode
-	mov ah, 0x00
-	mov al, 0x03
-	int 0x10
+; * Set up disk read
+mov dh, 0x0       ; * head 0
+mov dl, 0x0       ; * drive 0
+mov ch, 0x0       ; * cylinder 0
+mov cl, 0x02      ; * starting sector to read from disk
 
-	;; Change color/pallete
-	mov ah, 0x0B
-	mov bh, 0x00
-	mov bl, 0x01
-	int 0x10
-	
-	mov bx, testString	; * mov the memory address of testString into bx register
-	call print_string
-	
-	mov dx, 0x12AB	        ; * sample hex no. to print
-	call print_hex
-	
-	jmp $ 			; * Keep jumping to here; neverending loop	
-	
-	;; * Included Files
-	%include "print_string.asm"
-	%include "print_hex.asm"
+read_disk:
+  mov ah, 0x02      ; * int 13/ah=02h, BIOS read disk sector into memory
+  mov al, 0x01      ; * No of sectors we want to read ex: 1
+  int 0x13          ; * BIOS interrupts for disk functions
 
-	
-	;; Variables
-testString:	db 'This is a hex string', 0xA, 0xD, 0	; * 0/null to null terminate
-testString2:	db 'This is awesome!', 0	; * 0/null to null terminate
+  jc read_disk   ; * retry if disk read error (carry flag set/ = 1)
 
-	times 510-($-$$) db 0
+  ;; * Reset segment registers for RAM
+  mov ax, 0x1000
+  mov ds, ax        ; * data segment
+  mov es, ax        ; * extra segment
+  mov fs, ax        ; * ""
+  mov gs, ax        ; * ""
+  mov ss, ax        ; * stack segment
 
-	dw 0xaa55		; BIOS magic number
-	
+  jmp 0x1000:0x0
 
-; * nasm bootSect.asm -o bootSect
-; * qemu-system-i386 bootSect
+  ;; * Boot sector magic
+  times 510-($-$$) db 0
 
+  dw 0xaa55		; * BIOS magic number
 
-	;; References
-	;;  Text Modes
-	;;  https://en.wikipedia.org/wiki/VGA_text_mode
+; * nasm bootSect.asm -o bootSect.bin
+; * cat bootSect.bin kernel.bin > OS.bin
+; * qemu-system-i386 -boot a -fda OS.bin
 
-	;;  Video Modes
-	;;  https://mendelson.org/wpdos/videomodes.txt
+;; References
+;;  Text Modes
+;;  https://en.wikipedia.org/wiki/VGA_text_mode
 
-	;; Colors in BIOS
-	;; https://en.wikipedia.org/wiki/BIOS_color_attributes
+;;  Video Modes
+;;  https://mendelson.org/wpdos/videomodes.txt
+
+;; Colors in BIOS
+;; https://en.wikipedia.org/wiki/BIOS_color_attributes

@@ -1,6 +1,7 @@
 .bochsrc
 bootSect
-
+kernel
+*bin
 
 # -*- mode: gitignore; -*-
 *~

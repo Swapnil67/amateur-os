@@ -1,12 +1,11 @@
-	;; *
-	;; * Prints hex value using register DX and print_string.asm
-	;; *
+;; *
+;; * Prints hex value using register DX and print_string.asm
+;; *
 
+;; * Ascii '0'-'9' = hex 0x30 - 0x39
+;; * Ascii 'A'-'F' = hex 0x41 - 0x46
+;; * Ascii 'a'-'f' = hex 0x61 - 0x66
 
-	;; Ascii '0'-'9' = hex 0x30 - 0x39
-	;; Ascii 'A'-'F' = hex 0x41 - 0x46
-	;; Ascii 'a'-'f' = hex 0x61 - 0x66
-	
 print_hex:
 	pusha 			; * Save all registers to the stack
 	mov cx, 0		; * Initialize loop counter
@@ -26,7 +25,6 @@ hex_loop:
 
 	add al, 0x07 		; * To get ascii 'A' - 'F'
 	
-
 	;; * Move ascii character into bx string
 move_intobx:
 	mov bx, hexString + 5 	; * base address of hexString + length of string
@@ -37,7 +35,6 @@ move_intobx:
 	
 	add cx, 1		; * Increment the counter
 	jmp hex_loop		; * Loop for next hex digit
-	
 	
 hex_loop_end:
 	mov bx, hexString
