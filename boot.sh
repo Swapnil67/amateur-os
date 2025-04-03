@@ -2,8 +2,8 @@
 
 set -xe
 
-nasm bootSect.asm -o bootSect.bin
-nasm kernel.asm -o kernel.bin
+nasm ./src/asm/bootSect.asm -o ./bin/bootSect.bin
+nasm ./src/asm/kernel.asm -o ./bin/kernel.bin
 
-cat bootSect.bin kernel.bin > OS.bin
-qemu-system-i386 -boot a -fda OS.bin
+cat ./bin/bootSect.bin ./bin/kernel.bin > ./bin/OS.bin
+qemu-system-i386 -boot a -fda ./bin/OS.bin
