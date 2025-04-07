@@ -23,7 +23,7 @@ read_disk:
   jc read_disk   ; * retry if disk read error (carry flag set/ = 1)
 
   ;; * READ KERNEL TABLE INTO MEMORY SECOND
-  mov bx, 0x2000    ; * load the sector to memory addr 0x1000
+  mov bx, 0x2000    ; * load the sector to memory addr 0x2000
   mov es, bx 
   mov bx, 0x0      ; * ES:BX = 0x2000:0x0000
 
