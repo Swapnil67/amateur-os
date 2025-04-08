@@ -65,14 +65,53 @@ filebrowser:
   mov bl, 0x01
   int 0x10
 
+  mov si, filetableHeading
+  call print_string
+
   ;; * Load file Table string from it's memory location (0x1000), print file
   ;; * and program names & sector numbers to screen, for user to choose.
-  mov ax, 0x1000
-  mov es, ax
-  mov bx, 0
+
+  xor cx, cx 
+  mov ax, 0x1000      ; * File table location
+  mov es, ax          ; * ES = 0x1000
+  xor bx, bx          ; * ES:BX = 0x1000:0x0000
   mov ah, 0x0e	      ; * BIOS int 10h/ah=0x0e, teletype output
-  mov si, [ES:BX]
-  call print_string
+
+fileprogramLoop:
+  inc bx
+  mov al, [ES:BX]
+  cmp al, '}'           ; * At the end of the filetable
+  je halt_cpu
+
+  cmp al, '-'
+  je .sectorSpaces
+
+  cmp al, ','
+  je .fileTableNextElement
+  inc cx
+  int 0x10
+  jne fileprogramLoop
+
+;; * Print static number of spaces after program name
+.sectorSpaces: 
+  cmp cx, 30
+  je fileprogramLoop
+  mov al, 0x20
+  int 0x10
+  inc cx,
+  jmp .sectorSpaces
+
+.fileTableNextElement:
+  xor cx, cx
+  mov al, 0xA
+  int 0x10
+  mov al, 0xD
+  int 0x10
+  mov al, 0xA
+  int 0x10
+  mov al, 0xD
+  int 0x10
+  jmp fileprogramLoop
 
   jmp halt_cpu
 
@@ -81,8 +120,6 @@ filebrowser:
   ;; * ---------------------------------------------------------------
 reboot: 
   jmp 0xFFFF:0x0000
-
-
 
   ;; * ---------------------------------------------------------------
   ;; * Menu N) - End Program
@@ -102,9 +139,9 @@ halt_cpu:
   ;; * Print String
   ;; * ---------------------------------------------------------------
 print_string: 
-	mov ah, 0x0e	      ; * BIOS int 10h/ah=0x0e, teletype output
-	mov bh, 0x0	        ; * page number
-  mov bl, 0x01        ; * color 
+	mov ah, 0x0e	        ; * BIOS int 10h/ah=0x0e, teletype output
+	mov bh, 0x00	        ; * page number
+  mov bl, 0x01          ; * color 
 
 print_char: 
   mov al, [si]        ; * Move character value at address in si into al
@@ -125,9 +162,13 @@ menuString:	db '----------------------------------------', 0xA, 0xD, \
   '----------------------------------------', 0xA, 0xD, 0xA, 0xD,\
   'F) File Browser', 0xA, 0xD, \
   'R) Reboot', 0xA, 0xD, 0
-  success: db 0xA, 0xD, 'Command ran successfully!', 0xA, 0xD, 0
-  failure: db 0xA, 0xD, 'Oops! something went wrong :(', 0xA, 0xD, 0
-  cmdString: db ''
+success: db 0xA, 0xD, 'Command ran successfully!', 0xA, 0xD, 0
+failure: db 0xA, 0xD, 'Oops! something went wrong :(', 0xA, 0xD, 0
+
+filetableHeading:	db '---------------        --------------', 0xA, 0xD, \
+  '  File/Program             Sector', 0xA, 0xD, \
+  '---------------        --------------', 0xA, 0xD, 0
+  cmdString: db '', 0
 
   ;; * Boot sector magic
   times 510-($-$$) db 0
