@@ -25,7 +25,7 @@ read_disk:
   ;; * READ KERNEL TABLE INTO MEMORY SECOND
   mov bx, 0x2000    ; * load the sector to memory addr 0x2000
   mov es, bx 
-  mov bx, 0x0      ; * ES:BX = 0x2000:0x0000
+  mov bx, 0x00      ; * ES:BX = 0x2000:0x0000
 
   ; * Set up disk read
   mov dh, 0x0       ; * head 0
@@ -35,7 +35,7 @@ read_disk:
 
 read_disk1:
   mov ah, 0x02      ; * int 13/ah=02h, BIOS read disk sector into memory
-  mov al, 0x01      ; * No of sectors we want to read ex: 1
+  mov al, 0x02      ; * No of sectors we want to read ex: 1
   int 0x13          ; * BIOS interrupts for disk functions
 
   jc read_disk1   ; * retry if disk read error (carry flag set/ = 1)

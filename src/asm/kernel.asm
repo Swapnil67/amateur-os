@@ -1,17 +1,11 @@
-  ;; * kernel.asm: basic 'kernel` loaded from our bootsector
+;; * ---------------------------------------------------------------
+;; * kernel.asm: basic 'kernel` loaded from our bootsector
+;; * ---------------------------------------------------------------
 
-  ; org 0x0000		; * 'origin' of Boot Code; helps make sure addresses don't change
+; org 0x0000		; * 'origin' of Boot Code; helps make sure addresses don't change
 
-  ;; * Set Video Mode
-  mov ah, 0x00		; * int 0x10/ ah 0x00 = set video mode
-  mov al, 0x01		; * 40x25 text mode
-  int 0x10
-
-  ;; * Change color/pallete
-  mov ah, 0x0B
-  mov bh, 0x00
-  mov bl, 0x01
-  int 0x10
+main_menu:
+  call reset_text_screen
 
   ;; * Print Screen heading and Menu options
   mov si, menuString	
@@ -35,11 +29,15 @@ keyloop:
 run_command:
   mov byte [di], 0         ; * null terminate cmdString
   mov al, [cmdString]
+
   cmp al, 'F'              ; * file table command/menu option
   je filebrowser
 
-  cmp al, 'R'              
-  je reboot                ; * 'warm' reboot option
+  cmp al, 'R'              ; * 'warm' reboot option
+  je reboot                
+
+  cmp al, 'P'              ; * Print register values
+  je registers_print                       
 
   cmp al, 'N'              ; * file table command/menu option
   je end_program
@@ -53,18 +51,8 @@ run_command:
 
 filebrowser: 
   ;; * Reset screen state
-  ;; * --------------------
-  ;; * Set Video Mode
-  mov ah, 0x00		; * int 0x10/ ah 0x00 = set video mode
-  mov al, 0x01		; * 40x25 text mode
-  int 0x10
-
-  ;; * Change color/pallete
-  mov ah, 0x0B
-  mov bh, 0x00
-  mov bl, 0x01
-  int 0x10
-
+  call reset_text_screen
+  
   mov si, filetableHeading
   call print_string
 
@@ -81,7 +69,7 @@ fileprogramLoop:
   inc bx
   mov al, [ES:BX]
   cmp al, '}'           ; * At the end of the filetable
-  je halt_cpu
+  je stop
 
   cmp al, '-'
   je .sectorSpaces
@@ -113,13 +101,36 @@ fileprogramLoop:
   int 0x10
   jmp fileprogramLoop
 
-  jmp halt_cpu
+stop:
+  ; * go back msg
+  mov si, goBackMsg
+  call print_string
+
+  mov ah, 0x00        ; * get keystroke
+  int 0x16
+  jmp main_menu       ; * go back to main menu
 
   ;; * ---------------------------------------------------------------
   ;; * Menu R) - Reboot: far jump to reset vector
   ;; * ---------------------------------------------------------------
 reboot: 
   jmp 0xFFFF:0x0000
+
+  ;; * ---------------------------------------------------------------
+  ;; * Menu P) - Print Register Values
+  ;; * ---------------------------------------------------------------
+registers_print: 
+  ;; * Clears the screen
+  call reset_text_screen
+  call print_registers
+
+  ; * go back msg
+  mov si, goBackMsg
+  call print_string
+
+  mov ah, 0x00        ; * get keystroke
+  int 0x16
+  jmp main_menu       ; * go back to main menu
 
   ;; * ---------------------------------------------------------------
   ;; * Menu N) - End Program
@@ -140,6 +151,8 @@ halt_cpu:
   ;; * ---------------------------------------------------------------
 
   %include "./src/print/print_string.asm"
+  %include "./src/print/print_registers.asm"
+  %include "./src/screen/reset_text_screen.asm"
 
   ;; * ---------------------------------------------------------------
   ;; * Variables
@@ -148,9 +161,12 @@ menuString:	db '----------------------------------------', 0xA, 0xD, \
   'Kernel Booted, Welcome.', 0xA, 0xD,\
   '----------------------------------------', 0xA, 0xD, 0xA, 0xD,\
   'F) File Browser', 0xA, 0xD, \
-  'R) Reboot', 0xA, 0xD, 0
+  'R) Reboot', 0xA, 0xD, \
+  'P) Print Register Values', 0xA, 0xD, 0
+  
 success: db 0xA, 0xD, 'Command ran successfully!', 0xA, 0xD, 0
 failure: db 0xA, 0xD, 'Oops! something went wrong :(', 0xA, 0xD, 0
+goBackMsg: db 0xA, 0xD, 0xA, 0xD, 'Press any key to go back...', 0xA, 0xD, 0
 
 filetableHeading:	db '---------------        --------------', 0xA, 0xD, \
   '  File/Program             Sector', 0xA, 0xD, \
@@ -158,7 +174,7 @@ filetableHeading:	db '---------------        --------------', 0xA, 0xD, \
   cmdString: db '', 0
 
   ;; * Boot sector magic
-  times 510-($-$$) db 0
+  times 1024-($-$$) db 0
 
 ; * nasm kernel.asm -o kernel.bin 
 ; * qemu-system-i386 -boot a -fda kernel.bin
