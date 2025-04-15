@@ -6,7 +6,7 @@
 
 main_menu:
   call reset_text_screen
-
+  
   ;; * Print Screen heading and Menu options
   mov si, menuString	
   call print_string
@@ -44,6 +44,16 @@ run_command:
   mov si, failure
   call print_string
   jmp get_input
+
+
+  ;; * ---------------------------------------------------------------
+  ;; * Include Files
+  ;; * ---------------------------------------------------------------
+
+  %include "./src/print/print_string.asm"
+  %include "./src/print/print_hex.asm"
+  %include "./src/print/print_registers.asm"
+  %include "./src/screen/reset_text_screen.asm"
 
   ;; * ---------------------------------------------------------------
   ;; * Menu F) - File/Program browser & loader
@@ -122,14 +132,19 @@ reboot:
 registers_print: 
   ;; * Clears the screen
   call reset_text_screen
+
+  ;; * Print registers heading
+  mov si, registersHeading
+  call print_string
+
   call print_registers
 
   ; * go back msg
   mov si, goBackMsg
   call print_string
 
-  mov ah, 0x00        ; * get keystroke
-  int 0x16
+  mov ah, 0x00        
+  int 0x16            ; * get keystroke
   jmp main_menu       ; * go back to main menu
 
   ;; * ---------------------------------------------------------------
@@ -146,13 +161,6 @@ halt_cpu:
   ;; * End Main Logic
   ;; * ---------------------------------------------------------------
 
-  ;; * ---------------------------------------------------------------
-  ;; * Include Files
-  ;; * ---------------------------------------------------------------
-
-  %include "./src/print/print_string.asm"
-  %include "./src/print/print_registers.asm"
-  %include "./src/screen/reset_text_screen.asm"
 
   ;; * ---------------------------------------------------------------
   ;; * Variables
@@ -170,6 +178,10 @@ goBackMsg: db 0xA, 0xD, 0xA, 0xD, 'Press any key to go back...', 0xA, 0xD, 0
 
 filetableHeading:	db '---------------        --------------', 0xA, 0xD, \
   '  File/Program             Sector', 0xA, 0xD, \
+  '---------------        --------------', 0xA, 0xD, 0
+
+registersHeading:	db '---------------        --------------', 0xA, 0xD, \
+  '  Registers             Mem Location', 0xA, 0xD, \
   '---------------        --------------', 0xA, 0xD, 0
   cmdString: db '', 0
 

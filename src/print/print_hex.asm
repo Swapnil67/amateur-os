@@ -7,11 +7,11 @@
 ;; * Ascii 'a'-'f' = hex 0x61 - 0x66
 
 print_hex:
-	pusha 			; * Save all registers to the stack
-	xor cx, cx		; * Initialize loop counter
+	pusha 			      ; * Save all registers to the stack
+	xor cx, cx		    ; * Initialize loop counter
 
 hex_loop:
-	cmp cx, 4		; * Are we at end of loop
+	cmp cx, 4		      ; * Are we at end of loop
 	je hex_loop_end		; * End loop
 
 	;; * Convert the hex values to ascii
@@ -35,9 +35,9 @@ move_intobx:
 	
 	add cx, 1		; * Increment the counter
 	jmp hex_loop		; * Loop for next hex digit
-	
+
 hex_loop_end:
-	mov bx, hexString
+	mov si, hexString
 	call print_string
 	
 	popa			; * restore all the registers from the stack
@@ -45,3 +45,4 @@ hex_loop_end:
 
 	;; Data
 hexString:	db '0x0000', 0	; * Base hex string
+
